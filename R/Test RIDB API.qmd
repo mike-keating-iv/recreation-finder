@@ -1,0 +1,28 @@
+---
+title: "Test RIDB API"
+format: html
+Author: Mike Keating
+---
+
+The purpose of this Quarto document is to simply test ridb api functions in an interactive way.
+
+```{r}
+key <- Sys.getenv("RIDB_API_KEY")
+key
+```
+
+```{r}
+# 
+source("ridb_api_functions.R")
+
+data <- get_facilities(state = "NC", activity = "FISHING")
+```
+
+```{r}
+facilities <- data$rec_data
+table(facilities$FacilityTypeDescription, facilities$ParentOrgID)
+```
+
+```{r}
+str(facilities)
+```
