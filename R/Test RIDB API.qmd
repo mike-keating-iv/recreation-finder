@@ -15,14 +15,16 @@ key
 # 
 source("ridb_api_functions.R")
 
-data <- get_facilities(state = "NC", activity = "FISHING")
+data <- get_facilities(zip_code = "27701", radius = 50)
 ```
 
 ```{r}
 facilities <- data$rec_data
-table(facilities$FacilityTypeDescription, facilities$ParentOrgID)
+#table(facilities$FacilityTypeDescription, facilities$ParentOrgID)
+facilities$FacilityName
 ```
 
 ```{r}
-str(facilities)
+library(zipcodeR)
+geocode_zip("27701")
 ```
