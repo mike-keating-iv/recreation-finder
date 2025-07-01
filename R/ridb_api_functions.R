@@ -19,9 +19,9 @@ get_ridb <- function(endpoint, params=list()){
   
   res <- GET(url, query= c(apikey=key, params), accept("application/json"))
   all_data <- content(res, as ="parsed", simplifyVector = TRUE)
-  metadata_tibble <- as_tibble(all_data$METADATA$RESULTS)
+  #metadata_tibble <- as_tibble(all_data$METADATA$RESULTS)
   recdata_tibble <- as_tibble(all_data$RECDATA)
-  return(list(metadata=metadata_tibble, rec_data = recdata_tibble))
+  return(list(rec_data = recdata_tibble))
   
 }
 
@@ -33,7 +33,7 @@ get_facilities <- function(state = NULL, activity = NULL, limit = 50, zip_code =
   
   params <- list()
   
-  # These two parameters are optional for the call
+  # These parameters are optional for the call
   if (!is.null(state)) params$stateAbb <- state
   if (!is.null(activity)) params$activity <- activity
   if (!is.null(zip_code)) {
@@ -48,4 +48,10 @@ get_facilities <- function(state = NULL, activity = NULL, limit = 50, zip_code =
   
 }
 
+get_campsites_for_facility <- function(facility_id){
+  
+  endpoint <- paste0("/facilities/", facility_id, "/campsites")
+  print(endpoint)
+  get_ridb(endpoint)
+}
 
