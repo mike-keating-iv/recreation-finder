@@ -19,9 +19,12 @@ ui <- page_fluid(
     nav_panel("Download",
               sidebarLayout(
                 sidebarPanel(
-                  textInput("zip", "Enter Zip Code", value = "27701"),
-                  numericInput("radius_miles", "Search Radius (miles)", value = 25, min=1,max=200),
-                  actionButton("search", "Search Facilities"),
+                  textInput("state", "Enter State", value = "TN"),
+                  actionButton("search_by_state", "Search Facilities by State"),
+                  hr(),
+                  textInput("zip", "Enter Zip Code", value = "37738"),
+                  numericInput("radius_miles", "Search Radius (miles)", value = 25, min=1,max=50),
+                  actionButton("search_by_zip", "Search Facilities by Zip"),
                   hr(),
                   uiOutput("column_selector"),
                   downloadButton("download_data", "Download CSV")
@@ -39,18 +42,42 @@ server <- function(input, output){
   
   facilities <- reactiveVal(NULL)
   
-  observeEvent(input$search, {
+  observeEvent(input$search_by_zip, {
     req(input$zip)
     facs <- get_facilities(zip_code = input$zip, radius_miles = input$radius_miles)
-    facilities(facs$rec_data)
+    facilities(facs)
+  })
+  
+  observeEvent(input$search_by_state,{
+    req(input$state)
+    facs <- get_facilities(state=input$state)
+    facilities(facs)
   })
   
   # Display the returned data
+  #https://stackoverflow.com/questions/71083229/with-dt-datatable-is-it-possible-to-have-a-column-that-holds-very-long-case-n
   output$facility_table <- renderDataTable({
     req(facilities())
-    datatable(facilities(), filter = "top")
+    selected_cols <- input$columns %||% names(facilities())
+    datatable(
+      facilities()[,selected_cols, drop = FALSE],
+      filter = "top",
+      options = list(
+        scrollX = TRUE,
+        columnDefs = list(
+          list(
+            # Apply the ellipsis truncation to every selected column
+            targets = seq_along(selected_cols)-1,  
+            # Here we are going to truncate long text to 50 characters
+            render = JS("$.fn.dataTable.render.ellipsis(50, false)")  
+          )
+        )
+      ),
+      plugins = "ellipsis"
+    )
   })
   
+  # Select columns
   output$column_selector <- renderUI({
     req(facilities())
     checkboxGroupInput(

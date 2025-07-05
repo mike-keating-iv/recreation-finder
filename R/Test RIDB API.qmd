@@ -8,23 +8,41 @@ The purpose of this Quarto document is to simply test ridb api functions in an i
 
 ```{r}
 key <- Sys.getenv("RIDB_API_KEY")
-key
+
 ```
 
 ```{r}
 # 
 source("ridb_api_functions.R")
 
-data <- get_facilities(zip_code = "27701", radius = 50)
+facs<- get_facilities(zip_code = "27701", radius = 50)
 ```
 
 ```{r}
-facilities <- data$rec_data
+
 #table(facilities$FacilityTypeDescription, facilities$ParentOrgID)
-facilities$FacilityName
+facs$FacilityName
 ```
 
 ```{r}
 library(zipcodeR)
+```
+
+
+```{r}
 geocode_zip("27701")
 ```
+
+
+
+```{r}
+
+# Testing code to run app
+runGitHub(
+  repo = "st558-project2",        
+  username = "mike-keating-iv",
+  subdir = "RecreationFinder",
+  ref = "main"              
+)
+```
+

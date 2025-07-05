@@ -21,13 +21,13 @@ get_ridb <- function(endpoint, params=list()){
   all_data <- content(res, as ="parsed", simplifyVector = TRUE)
   #metadata_tibble <- as_tibble(all_data$METADATA$RESULTS)
   recdata_tibble <- as_tibble(all_data$RECDATA)
-  return(list(rec_data = recdata_tibble))
+  return(recdata_tibble)
   
 }
 
 
 
-get_facilities <- function(state = NULL, activity = NULL, limit = 50, zip_code = NULL, radius_miles = NULL){
+get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code = NULL, radius_miles = NULL){
   # Create a named list of parameters which we will pass to the httr package
   # This is more elegant than the approach used in hw4
   
@@ -44,8 +44,17 @@ get_facilities <- function(state = NULL, activity = NULL, limit = 50, zip_code =
   if (!is.null(radius_miles)) params$radius <- radius_miles
   
   # Call our get_ridb helper function
-  get_ridb("/facilities", params)
+  print(params)
+  facs <- get_ridb("/facilities", params)
   
+  # Filter
+  
+  facs <- facs |> select(FacilityName,FacilityDescription, 
+                         FacilityID,FacilityLatitude, 
+                         FacilityLongitude,FacilityTypeDescription, 
+                         FacilityUseFeeDescription,OrgFacilityID,
+                         ParentOrgID, ParentRecAreaID, Reservable)
+  return(facs)
 }
 
 get_campsites_for_facility <- function(facility_id){
