@@ -34,7 +34,7 @@ get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code 
   params <- list()
   
   # These parameters are optional for the call
-  if (!is.null(state)) params$stateAbb <- state
+  if (!is.null(state)) params$state <- state
   if (!is.null(activity)) params$activity <- activity
   if (!is.null(zip_code)) {
     zip_lookup <- geocode_zip(zip_code)

@@ -15,7 +15,7 @@ key <- Sys.getenv("RIDB_API_KEY")
 # 
 source("ridb_api_functions.R")
 
-facs<- get_facilities(zip_code = "27701", radius = 50)
+facs<- get_facilities(activity = "camping", state = "NC")
 ```
 
 ```{r}
