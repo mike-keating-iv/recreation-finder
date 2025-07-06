@@ -20,20 +20,17 @@ get_ridb <- function(endpoint, params=list()){
   res <- GET(url, query= c(apikey=key, params), accept("application/json"))
   all_data <- content(res, as ="parsed", simplifyVector = TRUE)
   #metadata_tibble <- as_tibble(all_data$METADATA$RESULTS)
-  recdata_tibble <- as_tibble(all_data$RECDATA)
-  return(recdata_tibble)
+  #recdata_tibble <- as_tibble(all_data$RECDATA)
+  print(all_data$RECDATA$RECAREA)
+  return(all_data$RECDATA)
   
 }
 
 
 
-get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code = NULL, radius_miles = NULL){
-  # Create a named list of parameters which we will pass to the httr package
-  # This is more elegant than the approach used in hw4
-  
-  params <- list()
-  
-  # These parameters are optional for the call
+get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code = NULL, radius_miles = NULL, full = TRUE){
+  params <- list(limit = limit) 
+  if (full) params$full = "true"  
   if (!is.null(state)) params$state <- state
   if (!is.null(activity)) params$activity <- activity
   if (!is.null(zip_code)) {
@@ -43,19 +40,76 @@ get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code 
   }
   if (!is.null(radius_miles)) params$radius <- radius_miles
   
-  # Call our get_ridb helper function
   print(params)
   facs <- get_ridb("/facilities", params)
   
-  # Filter
+  # If no facilities found, return an empty tibble
+  if (length(facs) == 0) {
+    return(tibble(FacilityID = character(), FacilityName = character(), FacilityDescription = character(),
+                  FacilityTypeDescription = character(), ParentOrgID = character(), ParentRecAreaID = character(),
+                  FacilityLatitude = numeric(), FacilityLongitude = numeric(), ACTIVITY = list(), ORGANIZATION = list()))
+  }
   
-  facs <- facs |> select(FacilityName,FacilityDescription, 
-                         FacilityID,FacilityLatitude, 
-                         FacilityLongitude,FacilityTypeDescription, 
-                         FacilityUseFeeDescription,OrgFacilityID,
-                         ParentOrgID, ParentRecAreaID, Reservable)
-  return(facs)
+  # Return a clean tibble
+  facilities_df <- facs |> 
+    as_tibble() |>
+    select(FacilityID, FacilityName, FacilityDescription, FacilityTypeDescription,
+           ParentOrgID, ParentRecAreaID, FacilityLatitude, FacilityLongitude,
+           ACTIVITY, ORGANIZATION, CAMPSITE, RECAREA) |>
+    mutate(
+      # Extract info from the dataframe/list columns
+      OrgName = map_chr(ORGANIZATION, function(x) {
+        if (is.data.frame(x) && "OrgName" %in% names(x)) {
+          paste(unique(x$OrgName), collapse = ", ")
+        } else {
+          NA_character_
+        }
+      }),
+      OrgID = map_chr(ORGANIZATION, function(x) {
+        if (is.data.frame(x) && "OrgID" %in% names(x)) {
+          paste(unique(x$OrgID), collapse = ", ")
+        } else {
+          NA_character_
+        }
+      }),
+      OrgType = map_chr(ORGANIZATION, function(x) {
+        if (is.data.frame(x) && "OrgType" %in% names(x)) {
+          paste(unique(x$OrgType), collapse = ", ")
+        } else {
+          NA_character_
+        }
+      }),
+      Activities = map_chr(ACTIVITY, function(x) {
+        if (is.data.frame(x) && "ActivityName" %in% names(x)) {
+          # Combine all activities into one string
+          paste(unique(x$ActivityName), collapse = ", ")
+        } else {
+          NA_character_
+        }
+      }),
+      RecAreaName = map_chr(RECAREA, function(x) {
+        if (is.data.frame(x) && "RecAreaName" %in% names(x)) {
+          paste(unique(x$RecAreaName), collapse = ", ")
+        } else {
+          NA_character_
+        }
+      }),
+    )
+  return(facilities_df)
 }
+
+
+
+## Get all activities.
+# We will use this to populate a dropdown list to filter by option and likely be part of loadup
+# Counting this as one of the 6 query requirements
+get_activities <- function(){
+  acts <- get_ridb("/activities")
+ 
+  return(acts)
+}
+
+
 
 get_campsites_for_facility <- function(facility_id){
   

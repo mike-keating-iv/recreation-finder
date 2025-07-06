@@ -9,17 +9,25 @@
 library(shiny)
 library(DT)
 library(bslib)
+library(leaflet) # For mapping
 
+# Import our custom functions
 source("../R/ridb_api_functions.R")
+source("../R/ridb_plot_functions.R")
 
 ui <- page_fluid(
   navset_tab(
-    nav_panel("About", "About this app"),
-    nav_panel("Search", "search"),
-    nav_panel("Download",
+    nav_panel("About", "RIDB is a part of the Recreation One Stop Program (R1S) provides a single source of recreational oppurtunities nationwide."),
+    nav_panel("Search Facilities",
               sidebarLayout(
                 sidebarPanel(
-                  textInput("state", "Enter State", value = "TN"),
+                  h3("Search for Recreation Facilities"),
+                  h5("Optionally Select Activities"),
+                  selectInput("activity", "Select Activity", choices = NULL, selected = NULL, multiple = TRUE),
+                  hr(),
+                  h5("Search by State or Zip Code"),
+                  # Allow drop down of all states using built in sate.abb function
+                  selectInput("state", "Enter State", choices = state.abb, multiple = FALSE),
                   actionButton("search_by_state", "Search Facilities by State"),
                   hr(),
                   textInput("zip", "Enter Zip Code", value = "37738"),
@@ -33,6 +41,37 @@ ui <- page_fluid(
                         )
               )
               ),
+    nav_panel("Explore",
+              fluidPage(
+                selectInput("explore_mode", "Choose View",
+                            choices = c("Plot" = "plot", "Map" = "map"),
+                            selected = "map"),
+                conditionalPanel(
+                  condition = "input.explore_mode == 'plot'",
+                  sidebarLayout(
+                    sidebarPanel(
+                      selectInput("x_var", "X Variable", choices = NULL),
+                      selectInput("y_var", "Y Variable", choices = NULL),
+                      selectInput("group_var", "Group / Fill Variable", choices = NULL),
+                      selectInput("plot_type", "Plot Type",
+                                  choices = c("Scatterplot", "Boxplot", "Bar Plot")),
+                      checkboxInput("add_facet", "Facet by Group?", value = FALSE)
+                    ),
+                    mainPanel(
+                      plotOutput("explore_plot"),
+                      hr(),
+                      tableOutput("summary_table")
+                    )
+                  )
+                ),
+                conditionalPanel(
+                  condition = "input.explore_mode == 'map'",
+                  leafletOutput("facility_map", height = 600),
+                  hr(),
+                  #tableOutput()
+                )
+              )
+    ),
     
     id = "tab"
   )
@@ -41,6 +80,18 @@ ui <- page_fluid(
 server <- function(input, output){
   
   facilities <- reactiveVal(NULL)
+  activities <- reactiveVal(NULL)
+  
+  ### SEARCH TAB
+  # Search for and download data
+  # Populate the dropdown for activities on startup
+  observe({
+    act <- get_activities()
+    activities(act)
+    
+    updateSelectInput(inputId = "activity",
+                      choices = setNames(act$ActivityID, act$ActivityName))
+  })
   
   observeEvent(input$search_by_zip, {
     req(input$zip)
@@ -50,7 +101,7 @@ server <- function(input, output){
   
   observeEvent(input$search_by_state,{
     req(input$state)
-    facs <- get_facilities(state=input$state)
+    facs <- get_facilities(state=input$state, activity = input$activity)
     facilities(facs)
   })
   
@@ -59,6 +110,19 @@ server <- function(input, output){
   output$facility_table <- renderDataTable({
     req(facilities())
     selected_cols <- input$columns %||% names(facilities())
+    # Don't display the columns that contain objects
+    # We want to keep them in the actual tibble though
+    selected_cols <- setdiff(selected_cols, c("ACTIVITY", "ORGANIZATION"))
+    
+    # Show a note if our api call returns nothing
+    if (nrow(facilities()) == 0) {
+      return(datatable(
+        tibble(Note = "No facilities found for the selected criteria."),
+        # Hide all the pages etc since we are just showing a note
+        options = list(dom = 't')  
+      ))
+    }
+    
     datatable(
       facilities()[,selected_cols, drop = FALSE],
       filter = "top",
@@ -87,6 +151,61 @@ server <- function(input, output){
       selected = names(facilities())
     )
   })
+  
+  # EXPLORE TAB
+  observeEvent(facilities(), {
+    updateSelectInput(inputId = "x_var", choices = names(facilities()))
+    updateSelectInput(inputId = "y_var", choices = names(facilities()))
+    updateSelectInput(inputId = "group_var", choices = c("None", names(facilities())))
+  })
+  
+  output$explore_plot <- renderPlot({
+    req(facilities(), input$x_var, input$plot_type)
+    create_explore_plot(
+      df = facilities(),
+      x_var = input$x_var,
+      y_var = input$y_var,
+      group_var = input$group_var,
+      plot_type = input$plot_type,
+      facet = input$add_facet
+    )
+  })
+  
+  output$summary_table <- renderTable({
+    req(facilities(), input$x_var)
+    create_summary_table(
+      df = facilities(),
+      x_var = input$x_var,
+      y_var = input$y_var,
+      group_var = input$group_var
+    )
+  })
+  
+  output$facility_map <- renderLeaflet({
+    req(facilities())
+    df <- facilities()
+    leaflet(data = df) |>
+      addProviderTiles("CartoDB.Positron") |>
+      addCircleMarkers(
+        lng = ~FacilityLongitude,
+        lat = ~FacilityLatitude,
+        label = ~FacilityName,
+        popup = ~paste0(
+          "<strong>", as.character(FacilityName %||% "Unnamed"), "</strong><br><br>",
+          "<strong>Type:</strong> ", as.character(FacilityTypeDescription %||% "Unknown"), "<br>",
+          "<strong>Organization:</strong> ", as.character(OrgName %||% "Unknown"), "<br>",
+          "<strong>Activities:</strong> ", as.character(Activities %||% "None"), "<br>",
+          # Add some css to avoid long descriptions from panning the map awkwardly
+          # Some of the descriptions are fairly long html, which renders nicely
+          "<div style='max-height:200px; overflow-y:auto;'>", # scrollable 
+          as.character(FacilityDescription %||% "No description available"),
+          "</div>"
+        ),
+        radius = 4,
+        fillOpacity = 0.7
+      )
+  })
+  
   
 }
 
