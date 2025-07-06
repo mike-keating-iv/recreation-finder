@@ -64,11 +64,29 @@ ui <- page_fluid(
                     )
                   )
                 ),
+                
                 conditionalPanel(
                   condition = "input.explore_mode == 'map'",
-                  leafletOutput("facility_map", height = 600),
-                  hr(),
-                  #tableOutput()
+                  sidebarLayout(
+                    sidebarPanel(
+                      h5("Color Grouping"),
+                      selectInput("map_color_group", "Color Map Markers By:",
+                                  choices = c("Organization"="OrgName",
+                                              "Recreation Area" = "RecAreaName",
+                                              "Facility Type" = "FacilityTypeDescription"),
+                                  selected = "RecAreaName"),
+                      h5("Contingency Table"),
+                      selectInput("contingency_choice", "Select Contingency Table",
+                                  choices = c("Org x Facility Type" = "orgXtype",
+                                              "Rec Area x Facility Type" = "areaXtype",
+                                              "Org x Rec Area" = "orgXarea")),
+                      tableOutput("contingency_table")),
+                    mainPanel(
+                      leafletOutput("facility_map", height = 600))
+                  ),
+                  
+          
+                 
                 )
               )
     ),
@@ -181,14 +199,22 @@ server <- function(input, output){
     )
   })
   
+  ## INTERACTIVE MAP
   output$facility_map <- renderLeaflet({
-    req(facilities())
+    req(facilities(), input$map_color_group)
   
-    create_facilities_map(facilities())
+    create_facilities_map(facilities(), input$map_color_group)
     
   })
   
+  output$contingency_table <- renderTable({
+    req(facilities(), input$contingency_choice)
+
+    create_contingency_table(facilities(), input$contingency_choice)
+  })
   
+    
+    
 }
 
 shinyApp(ui = ui, server = server)

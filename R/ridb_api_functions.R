@@ -51,7 +51,7 @@ get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code 
   # Return a clean tibble
   facilities_df <- facs |> 
     as_tibble() |>
-    select(FacilityID, FacilityName, FacilityDescription, FacilityTypeDescription,
+    select(FacilityID, FacilityName, FacilityDescription, FacilityTypeDescription,Reservable,
            ParentOrgID, ParentRecAreaID, FacilityLatitude, FacilityLongitude,
            ACTIVITY, ORGANIZATION, CAMPSITE, RECAREA) |>
     mutate(
