@@ -10,6 +10,7 @@ The purpose of this Quarto document is to simply test ridb api functions in an i
 key <- Sys.getenv("RIDB_API_KEY")
 library(shiny)
 
+
 ```
 
 ```{r}

@@ -19,9 +19,7 @@ get_ridb <- function(endpoint, params=list()){
   
   res <- GET(url, query= c(apikey=key, params), accept("application/json"))
   all_data <- content(res, as ="parsed", simplifyVector = TRUE)
-  #metadata_tibble <- as_tibble(all_data$METADATA$RESULTS)
-  #recdata_tibble <- as_tibble(all_data$RECDATA)
-  print(all_data$RECDATA$RECAREA)
+
   return(all_data$RECDATA)
   
 }
@@ -40,7 +38,7 @@ get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code 
   }
   if (!is.null(radius_miles)) params$radius <- radius_miles
   
-  print(params)
+
   facs <- get_ridb("/facilities", params)
   
   # If no facilities found, return an empty tibble

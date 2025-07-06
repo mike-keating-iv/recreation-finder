@@ -55,3 +55,32 @@ create_summary_table <- function(df, x_var, y_var = NULL, group_var = NULL) {
     )
   }
 }
+
+
+create_facilities_map <- function(df){
+  # Create Map of the facilities
+  
+  # Filter out locations that are entered as (0,0) which adds points off the coast of Africa
+  df <- df |> filter(FacilityLongitude != 0, FacilityLatitude != 0)
+  
+  leaflet(data = df) |>
+    addProviderTiles("CartoDB.Positron") |>
+    addCircleMarkers(
+      lng = ~FacilityLongitude,
+      lat = ~FacilityLatitude,
+      label = ~FacilityName,
+      popup = ~paste0(
+        "<strong>", as.character(FacilityName %||% "Unnamed"), "</strong><br><br>",
+        "<strong>Type:</strong> ", as.character(FacilityTypeDescription %||% "Unknown"), "<br>",
+        "<strong>Organization:</strong> ", as.character(OrgName %||% "Unknown"), "<br>",
+        "<strong>Activities:</strong> ", as.character(Activities %||% "None"), "<br>",
+        # Add some css to avoid long descriptions from panning the map awkwardly
+        # Some of the descriptions are fairly long html, which renders nicely
+        "<div style='max-height:200px; overflow-y:auto;'>", # scrollable 
+        as.character(FacilityDescription %||% "No description available"),
+        "</div>"
+      ),
+      radius = 4,
+      fillOpacity = 0.7
+    )
+}
