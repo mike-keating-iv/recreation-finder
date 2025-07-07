@@ -25,10 +25,11 @@ get_ridb <- function(endpoint, params=list()){
 }
 
 
-
+# This should handle 3 out of the 6 query requirments
+# Modify state, activity, and zip coordinates
 get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code = NULL, radius_miles = NULL, full = TRUE){
   params <- list(limit = limit) 
-  if (full) params$full = "true"  
+  if (full) params$full = "true" # this must be "true" in order for us to return the full dfs for attributes like ORGANIZATION  
   if (!is.null(state)) params$state <- state
   if (!is.null(activity)) params$activity <- activity
   if (!is.null(zip_code)) {
@@ -85,6 +86,15 @@ get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code 
           NA_character_
         }
       }),
+      CountActivities = map_int(ACTIVITY, function(x) {
+        if (is.data.frame(x) && "ActivityName" %in% names(x)) {
+          # Combine all activities into one string
+          length(unique(x$ActivityName))
+        } else {
+          # Result must be zero instead of NA in this case
+          0
+        }
+      }),
       RecAreaName = map_chr(RECAREA, function(x) {
         if (is.data.frame(x) && "RecAreaName" %in% names(x)) {
           paste(unique(x$RecAreaName), collapse = ", ")
@@ -100,7 +110,7 @@ get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code 
 
 ## Get all activities.
 # We will use this to populate a dropdown list to filter by option and likely be part of loadup
-# Counting this as one of the 6 query requirements
+# Counting this as one of the 6 query requirements (4/6)
 get_activities <- function(){
   acts <- get_ridb("/activities")
  
@@ -108,7 +118,7 @@ get_activities <- function(){
 }
 
 
-
+# 5/6
 get_campsites_for_facility <- function(facility_id){
   
   endpoint <- paste0("/facilities/", facility_id, "/campsites")

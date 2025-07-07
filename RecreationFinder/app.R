@@ -38,7 +38,7 @@ ui <- page_fluid(
 
       <h4>Tabs Overview</h4>
       <ul>
-        <li><strong>Search Facilities</strong>: Query the RIDB API for facilities based on ZIP code, state, and activity. Download and explore the resulting dataset.</li>
+        <li><strong>Search Facilities</strong>: Query the RIDB API for facilities based on ZIP code, state, and activity. Download and explore the resulting dataset.<br>Users can select from a list of activities populated by a call to the API</li>
         <li><strong>Explore</strong>: Create interactive plots and view a map of facilities.</li>
       </ul>
 
@@ -60,7 +60,7 @@ ui <- page_fluid(
                   selectInput("activity", "Select Activity", choices = NULL, selected = NULL, multiple = TRUE),
                   hr(),
                   h5("Search by State or Zip Code"),
-                  # Allow drop down of all states using built in sate.abb function
+                  # Allow drop down of all states using built in state.abb function
                   selectInput("state", "Enter State", choices = state.abb, multiple = FALSE),
                   actionButton("search_by_state", "Search Facilities by State"),
                   hr(),
