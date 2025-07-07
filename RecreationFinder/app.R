@@ -15,7 +15,13 @@ library(leaflet) # For mapping
 source("../R/ridb_api_functions.R")
 source("../R/ridb_plot_functions.R")
 
+# Set one of the bslib themes
+theme <- bs_theme(bootswatch = "flatly")
+
+
+
 ui <- page_fluid(
+  theme = theme,
   navset_tab(
     nav_panel("About",
               fluidPage(
@@ -36,8 +42,8 @@ ui <- page_fluid(
         <li><strong>Explore</strong>: Create interactive plots and view a map of facilities.</li>
       </ul>
 
-   
-
+      <img src='imgs/RecLogo_Tag.png' height='120px'>
+      
       <p>Data Source: <a href='https://ridb.recreation.gov/' target='_blank'>RIDB (Recreation.gov API)</a></p>
 
 
