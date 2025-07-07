@@ -17,7 +17,35 @@ source("../R/ridb_plot_functions.R")
 
 ui <- page_fluid(
   navset_tab(
-    nav_panel("About", "RIDB is a part of the Recreation One Stop Program (R1S) provides a single source of recreational oppurtunities nationwide."),
+    nav_panel("About",
+              fluidPage(
+                h2("About This App"),
+                HTML("
+      <p><strong>Recreation Finder</strong> is a Shiny app built to explore recreational facilities across the United States using data from the <a href='https://ridb.recreation.gov/' target='_blank'>Recreation Information Database (RIDB)</a>, which is part of the federal Recreation One Stop (R1S) program.</p>
+
+      <p>The goal of this application is to provide users with an interactive way to:</p>
+      <ul>
+        <li>Search for recreation facilities by <strong>state</strong>, <strong>ZIP code</strong>, and <strong>activity</strong></li>
+        <li>View and download detailed facility data</li>
+        <li>Summarize the dataset using contingency tables and statistical summaries</li>
+      </ul>
+
+      <h4>Tabs Overview</h4>
+      <ul>
+        <li><strong>Search Facilities</strong>: Query the RIDB API for facilities based on ZIP code, state, and activity. Download and explore the resulting dataset.</li>
+        <li><strong>Explore</strong>: Create interactive plots and view a map of facilities.</li>
+      </ul>
+
+   
+
+      <p>Data Source: <a href='https://ridb.recreation.gov/' target='_blank'>RIDB (Recreation.gov API)</a></p>
+
+
+      <p>Developed by Mike Keating</p>
+    ")
+              )
+    ),
+    
     nav_panel("Search Facilities",
               sidebarLayout(
                 sidebarPanel(
