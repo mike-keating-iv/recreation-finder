@@ -49,15 +49,16 @@ This app queries the following endpoints in the RIDB API:
 ---
 
 ## Running the App
-First install dependencies:
-'''r
-install.packages(c("shiny", "DT", "bslib", "leaflet", "httr", "jsonlite", "tidyverse", "zipcodeR"))
 
+```r
+# Install dependencies
+install.packages(c("shiny", "DT", "bslib", "leaflet", "httr", "jsonlite", "tidyverse", "zipcodeR"))
+# Run Application
 shiny::runGitHub(
   repo = "st558-project2",        
   username = "mike-keating-iv",
   subdir = "RecreationFinder",
   ref = "main"              
 )
-'''
+```
 
