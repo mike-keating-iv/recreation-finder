@@ -55,7 +55,7 @@ This app queries the following endpoints in the RIDB API:
 install.packages(c("shiny", "DT", "bslib", "leaflet", "httr", "jsonlite", "tidyverse", "zipcodeR"))
 # Run Application
 shiny::runGitHub(
-  repo = "st558-project2",        
+  repo = "recreation-finder",        
   username = "mike-keating-iv",
   subdir = "RecreationFinder",
   ref = "main"              
