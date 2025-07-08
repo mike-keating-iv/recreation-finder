@@ -46,8 +46,8 @@ get_ridb <- function(endpoint, params=list(), limit = 500, all_pages = TRUE){
 }
 
 
-# This should handle 3 out of the 6 query requirments
-# Modify state, activity, and zip coordinates
+# This should handle 4 out of the 6 query requirements
+# Modify state, activity, and zip coordinates (3 modifications, 1 endpoint = 4/6)
 get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code = NULL, radius_miles = NULL, full = TRUE){
   params <- list(limit = limit) 
   if (full) params$full = "true" # this must be "true" in order for us to return the full dfs for attributes like ORGANIZATION  
@@ -131,41 +131,74 @@ get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code 
 
 ## Get all activities.
 # We will use this to populate a dropdown list to filter by option and likely be part of loadup
-# Counting this as one of the 6 query requirements (4/6)
+# Counting this as one of the 6 query requirements, since it is one endpoint (5/6)
 get_activities <- function(){
   acts <- get_ridb("/activities")
-   
   return(acts)
 }
 
 
-# 5/6
+# 6/6
+# One endpoint
+# One end point, one modification
 get_campsites_for_facility <- function(facility_id){
   
   endpoint <- paste0("/facilities/", facility_id, "/campsites")
   print(endpoint)
   campsites <- get_ridb(endpoint)
   
-  # TODO: Handle trying to call this function on a facility that doesn't return campsites
+  # Handle trying to call this function on a facility that doesn't return campsites
   
-  campsites <- campsites |>
-    mutate(
-      # Flatten attributes into one row per campsite
-      AttributeSummary = map_chr(ATTRIBUTES, function(attr_df) {
-        if (is.data.frame(attr_df) && all(c("AttributeName", "AttributeValue") %in% names(attr_df))) {
-          paste0(attr_df$AttributeName, ": ", attr_df$AttributeValue, collapse = "; ")
-        } else {
-          NA_character_
-        }
-      })
-    )
+  if (nrow(campsites) == 0) {
+    campsites <- tibble(Note = "No campsites available for this facility. If 'CAMPING' is listed as an Activity, this may mean open camping is possible instead of offical sites.")
+  }
+  else{
+    # Widen the dataframe by making columns out of each df
+    # First use map to make everything into a named list
+    campsites <- campsites |> 
+      select(CampsiteID, CampsiteName, CampsiteReservable, CampsiteType, TypeOfUse, ATTRIBUTES) |> 
+      mutate(ATTRIBUTES_extracted = map(ATTRIBUTES, function(attr_df) {
+        
+      if (is.data.frame(attr_df) && all(c("AttributeName", "AttributeValue") %in% names(attr_df))) {
+        setNames(attr_df$AttributeValue, attr_df$AttributeName)
+      } else {
+        NULL
+      }
+    }) # Then expand into columns
+    ) |> unnest_wider(ATTRIBUTES_extracted, names_repair = "unique") |> 
+      select(!ATTRIBUTES) # drop this column since we don't need it anymore
+    
+    ## Deprecated
+    # campsites <- campsites |>
+    #   mutate(
+    #     # Flatten attributes into one row per campsite
+    #     # It's probably better to widen the tibble and make columns for each
+    #   #   AttributeSummary = map_chr(ATTRIBUTES, function(attr_df) {
+    #   #     if (is.data.frame(attr_df) && all(c("AttributeName", "AttributeValue") %in% names(attr_df))) {
+    #   #       paste0(attr_df$AttributeName, ": ", attr_df$AttributeValue, collapse = "; ")
+    #   #     } else {
+    #   #       NA_character_
+    #   #     }
+    #   #   })
+    #   # )
+    
+  }
+
   return(campsites)
 }
 
+
+get_addresses_for_facility <- function(facility_id){
+  
+}
+
+
+
 # Wrapper to combine campsites and addresses into details
 get_facility_details <- function(facility_id){
-  campsites <- get_campsites_for_facility(facility_id) |> 
-    select(CampsiteID, CampsiteName, CampsiteReservable, CampsiteType, TypeOfUse, AttributeSummary)
+  
+  campsites <- get_campsites_for_facility(facility_id) 
+    
   
   
   addresses <- list()
