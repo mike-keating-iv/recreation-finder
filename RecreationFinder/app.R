@@ -84,12 +84,21 @@ ui <- page_fluid(
                   condition = "input.explore_mode == 'plot'",
                   sidebarLayout(
                     sidebarPanel(
-                      selectInput("x_var", "X Variable", choices = NULL),
-                      selectInput("y_var", "Y Variable", choices = NULL),
-                      selectInput("group_var", "Group / Fill Variable", choices = NULL),
                       selectInput("plot_type", "Plot Type",
-                                  choices = c("Scatterplot", "Boxplot", "Bar Plot")),
-                      checkboxInput("add_facet", "Facet by Group?", value = FALSE)
+                                  choices = c("Activity Count by X", "Top Recreation Areas", "Heatmap: Facility Type vs Recreation Area")),
+                      
+                      # Add another conditional panel to hide choices when not relevant for the other plots
+                      conditionalPanel(
+                        condition = "input.plot_type == 'Activity Count by X'",
+                        selectInput("x_var", "X Variable", 
+                                    choices = c("OrgName","RecAreaName", "Reservable", "FacilityTypeDescription" )),
+                        selectInput("group_var", "Group / Fill Variable", 
+                                    choices = c("None", "OrgName", "RecAreaName", "FacilityTypeDescription", "Reservable")),
+                        checkboxInput("add_facet", "Facet by Group?", value = FALSE)
+                      )
+                    
+    
+                      
                     ),
                     mainPanel(
                       plotOutput("explore_plot"),
@@ -153,8 +162,12 @@ server <- function(input, output){
   
   observeEvent(input$search_by_state,{
     req(input$state)
-    facs <- get_facilities(state=input$state, activity = input$activity)
-    facilities(facs)
+    # Add a progress bar
+    withProgress(message = "Searching for facilities...", value = 0.1 ,{
+      facs <- get_facilities(state=input$state, activity = input$activity)
+      facilities(facs)
+    })
+ 
   })
   
   # Display the returned data
@@ -205,10 +218,28 @@ server <- function(input, output){
   })
   
   # EXPLORE TAB
-  observeEvent(facilities(), {
-    updateSelectInput(inputId = "x_var", choices = names(facilities()))
-    updateSelectInput(inputId = "y_var", choices = names(facilities()))
-    updateSelectInput(inputId = "group_var", choices = c("None", names(facilities())))
+
+  # Change  var plot options by selected plot type
+  observeEvent(input$plot_type,{
+    req(facilities())
+    df <- facilities()
+    
+    if (input$plot_type == "Activity Count by X"){
+      x_choices <- c("OrgName", "RecAreaName")
+      
+    }
+    else if (input$plot_type == "Heatmap: Facility Type vs Recreation Area"){
+      x_choices <- c("None")
+    }
+    else if(input$plot_type == "Top Recreation Areas"){
+      x_choices <- c("None")
+      group_choices <- c("RecAreaName")
+    }
+    
+    # Update to only allow a few options
+    updateSelectInput(inputId = "x_var", choices = x_choices)
+    updateSelectInput(inputId = "group_var", choices = group_choices)
+    
   })
   
   output$explore_plot <- renderPlot({
@@ -216,22 +247,20 @@ server <- function(input, output){
     create_explore_plot(
       df = facilities(),
       x_var = input$x_var,
-      y_var = input$y_var,
       group_var = input$group_var,
       plot_type = input$plot_type,
       facet = input$add_facet
     )
   })
   
-  output$summary_table <- renderTable({
-    req(facilities(), input$x_var)
-    create_summary_table(
-      df = facilities(),
-      x_var = input$x_var,
-      y_var = input$y_var,
-      group_var = input$group_var
-    )
-  })
+  # output$summary_table <- renderTable({
+  #   req(facilities(), input$x_var)
+  #   create_summary_table(
+  #     df = facilities(),
+  #     x_var = input$x_var,
+  #     group_var = input$group_var
+  #   )
+  # })
   
   ## INTERACTIVE MAP
   output$facility_map <- renderLeaflet({

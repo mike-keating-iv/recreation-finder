@@ -8,7 +8,9 @@ suppressWarnings(library(tidyverse))
 library(zipcodeR)
 
 ## API Functions
-get_ridb <- function(endpoint, params=list()){
+get_ridb <- function(endpoint, params=list(), limit = 500, all_pages = TRUE){
+  
+  
   # Base query which we will modify/call for each specific request
   # Each function will pass it a specific endpoint
   base <- "https://ridb.recreation.gov/api/v1"
@@ -17,10 +19,29 @@ get_ridb <- function(endpoint, params=list()){
   # Get local key
   key <- Sys.getenv("RIDB_API_KEY")
   
-  res <- GET(url, query= c(apikey=key, params), accept("application/json"))
-  all_data <- content(res, as ="parsed", simplifyVector = TRUE)
 
-  return(all_data$RECDATA)
+  all_results <- list()
+  start <- 0
+  repeat{
+    page_params <- c(params, list(apikey=key, limit=limit, offset = start))
+    
+    res <- GET(url, query=page_params, accept("application/json"))
+    page_data <- content(res, as ="parsed", simplifyVector = TRUE)
+    page_rec_data <-page_data$RECDATA
+    
+    all_results[[length(all_results) + 1]] <- page_rec_data
+    
+    total_results <- page_data$METADATA$RESULTS$TOTAL
+    
+    start <- start + limit
+    
+    # Stop getting results once we reach no longer add more
+    if(!all_pages || start >= total_results) break
+    
+  }
+  
+
+  return(bind_rows(all_results))
   
 }
 
@@ -113,7 +134,7 @@ get_facilities <- function(state = NULL, activity = NULL, limit = 500, zip_code 
 # Counting this as one of the 6 query requirements (4/6)
 get_activities <- function(){
   acts <- get_ridb("/activities")
- 
+   
   return(acts)
 }
 

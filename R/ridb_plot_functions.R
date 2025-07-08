@@ -6,31 +6,73 @@
 library(ggplot2)
 library(dplyr)
 
-create_explore_plot <- function(df, x_var, y_var, group_var, plot_type, facet = FALSE) {
+create_explore_plot <- function(df, x_var,group_var, plot_type, facet = FALSE) {
   # Generic for now...
   group_var <- if (group_var == "None") NULL else group_var
   p <- ggplot(df, aes_string(x = x_var))
   
-  if (plot_type == "Scatterplot") {
-    stopifnot(!is.null(y_var))
-    p <- p + aes_string(y = y_var)
-    if (!is.null(group_var)) p <- p + aes_string(color = group_var)
-    p <- p + geom_point()
-  } else if (plot_type == "Boxplot") {
-    stopifnot(!is.null(y_var))
-    p <- p + aes_string(y = y_var)
-    if (!is.null(group_var)) p <- p + aes_string(fill = group_var)
-    p <- p + geom_boxplot()
-  } else if (plot_type == "Bar Plot") {
-    if (!is.null(group_var)) p <- p + aes_string(fill = group_var)
-    p <- p + geom_bar()
-  }
+  if (plot_type == "Activity Count by X") {
+    stopifnot("CountActivities" %in% names(df))
   
-  if (facet && !is.null(group_var)) {
-    p <- p + facet_wrap(as.formula(paste("~", group_var)))
-  }
+    p <- p + aes_string(y = "CountActivities")
+    if (!is.null(group_var)) p <- p + aes_string(fill = group_var)
+    p <- p + geom_col(position="dodge") + theme_minimal() + 
+      theme(axis.text.x = element_text(angle=45, hjust=1)) # Rotate the labels, useful for states with lots of rec areas etc like CA
+    
+    title <- paste0("Acitivity Count by ", x_var)
+    x_lab <- x_var
+    y_lab <- "Activity Count"
+    p + theme_minimal() + labs(title = title, x=x_lab, y=y_lab)
+    if (facet && !is.null(group_var)) {
+      p <- p + facet_wrap(as.formula(paste("~", group_var)))
+    }
+    
+    return(p)
+    
+  } else if (plot_type == "Top Recreation Areas") {
+    # Grab the top 5 recreation areas
+    top_areas <- df |> filter(!is.na(RecAreaName)) |>
+      count(RecAreaName, sort=TRUE) |>
+      slice_max(n, n=5)
+    # Replace the original plot
+    p <- ggplot(top_areas, aes(x = n, y=reorder(RecAreaName,n))) +
+      geom_col(position="dodge") + labs(
+        title="Top Recreation Areas by Number of Facilities",
+        x = "Number of Facilities",
+        y = "Recreation Area"
+      )
+    if (!is.null(group_var)) p <- p + aes_string(fill = group_var)
+    title <- "Top Recreation Areas by Number of Facilities"
+    x_lab <- "Number of Facilities"
+    y_lab = "Recreation Area"
+    
+    p + theme_minimal() + labs(title = title, x=x_lab, y=y_lab)
+    return(p)
+    
+  } else if (plot_type == "Heatmap: Facility Type vs Recreation Area"){
+    
+    stopifnot(all(c("RecAreaName", "FacilityTypeDescription") %in% names(df)))
+    
+    df_counts <- df |> count(RecAreaName, FacilityTypeDescription)
+    title <- "Facility Type by Recreation Area"
+    x_lab <- "Facility Type"
+    y_lab <- "Recreation Area"
+    p <- ggplot(df_counts, aes(x = FacilityTypeDescription, y = RecAreaName, fill = n)) +
+      geom_tile(color = "white") +
+      scale_fill_gradient(low = "lightyellow", high = "steelblue") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      labs(
+        title = title,
+        x = x_lab,
+        y = y_lab,
+        fill = "Count"
+      )
+    return(p)
+
+}
+ 
   
-  p + theme_minimal() + labs(title = "Data Explorer Plot")
 }
 
 
@@ -39,8 +81,8 @@ create_summary_table <- function(df, x_var, y_var = NULL, group_var = NULL) {
   var_to_summarize <- y_var %||% x_var
   
   if (!is.null(group_var)) {
-    df %>%
-      group_by(.data[[group_var]]) %>%
+    df |>
+      group_by(.data[[group_var]]) |>
       summarize(
         Count = n(),
         Mean = mean(as.numeric(.data[[var_to_summarize]]), na.rm = TRUE),

@@ -27,7 +27,7 @@ facs
 
 # flatten the activity column
 #facs$ACTIVITY <- sapply(facs$ACTIVITY, function(x) as_tibble(x))
-facs$CAMPSITE[1]
+facs$CAMPSITE
 #facs
 ```
 
