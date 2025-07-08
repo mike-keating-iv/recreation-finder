@@ -102,15 +102,18 @@ create_summary_table <- function(df, x_var, y_var = NULL, group_var = NULL) {
 create_facilities_map <- function(df, color_map_group){
   # Create Map of the facilities
   
+
+  
+
+  
+  # Filter out locations that are entered as (0,0) which adds points off the coast of Africa
+  df <- df |> filter(FacilityLongitude != 0, FacilityLatitude != 0)
   # Color by a user supplied group
   # Default to "Unknown" if values are null
   group_values <- df[[color_map_group]] %||% "Unknown"
   
   # Color Pallete
-  pal <- colorFactor("Set2", domain=unique(group_values))
-  
-  # Filter out locations that are entered as (0,0) which adds points off the coast of Africa
-  df <- df |> filter(FacilityLongitude != 0, FacilityLatitude != 0)
+  pal <- colorFactor("Dark2", domain=unique(group_values))
   
   leaflet(data = df) |>
     addProviderTiles("CartoDB.Positron") |>
@@ -123,6 +126,7 @@ create_facilities_map <- function(df, color_map_group){
         "<strong>", as.character(FacilityName %||% "Unnamed"), "</strong><br><br>",
         "<strong>Type:</strong> ", as.character(FacilityTypeDescription %||% "Unknown"), "<br>",
         "<strong>Organization:</strong> ", as.character(OrgName %||% "Unknown"), "<br>",
+        "<strong>Recreation Area:</strong>", as.character(RecAreaName %||% "Unknown"), "<br>",
         "<strong>Activities:</strong> ", as.character(Activities %||% "None"), "<br>",
         # Add some css to avoid long descriptions from panning the map awkwardly
         # Some of the descriptions are fairly long html, which renders nicely

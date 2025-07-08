@@ -226,10 +226,12 @@ server <- function(input, output){
     
     if (input$plot_type == "Activity Count by X"){
       x_choices <- c("OrgName", "RecAreaName")
+      group_choices <- c("None", "OrgName", "RecAreaName", "FacilityTypeDescription", "Reservable")
       
     }
     else if (input$plot_type == "Heatmap: Facility Type vs Recreation Area"){
       x_choices <- c("None")
+      group_choices <- c("None")
     }
     else if(input$plot_type == "Top Recreation Areas"){
       x_choices <- c("None")
