@@ -134,11 +134,18 @@ ui <- page_fluid(
               )
     ),
     
+    
+    nav_panel("Facility Details",
+              fluidPage(
+                # Since this will only be populated after querying a facility we need to make it output
+                dataTableOutput("facility_campgrounds"),
+              )),
+    
     id = "tab"
   )
 )
 
-server <- function(input, output){
+server <- function(input, output, session){
   
   facilities <- reactiveVal(NULL)
   activities <- reactiveVal(NULL)
@@ -255,15 +262,7 @@ server <- function(input, output){
     )
   })
   
-  # output$summary_table <- renderTable({
-  #   req(facilities(), input$x_var)
-  #   create_summary_table(
-  #     df = facilities(),
-  #     x_var = input$x_var,
-  #     group_var = input$group_var
-  #   )
-  # })
-  
+
   ## INTERACTIVE MAP
   output$facility_map <- renderLeaflet({
     req(facilities(), input$map_color_group)
@@ -278,7 +277,34 @@ server <- function(input, output){
     create_contingency_table(facilities(), input$contingency_choice)
   })
   
+  ### FACILITY DETAILS TAB
+  selected_facility_details<- reactiveVal(NULL)
+  
+  
+  # Fetch details, we will render addresses and campsites separately later
+  observeEvent(input$fetch_facility, {
+    req(input$fetch_facility)
+    # Change over to the details tab
+    updateTabsetPanel(session, "tab", selected = "Facility Details")
     
+    withProgress(message = "Fetching facility details...", value = 0.5, {
+      details <- get_facility_details(input$fetch_facility)
+      selected_facility_details(details)
+    })
+  })
+  
+  output$facility_campgrounds <- renderDataTable({
+    req(selected_facility_details)
+    
+    campsites <- selected_facility_details()$campsites
+    
+    # Make sure campsites exist
+    if (nrow(campsites) == 0) return(datatable(data.frame(Note = "No campsites available."), options = list(dom = 't')))
+    
+    datatable(campsites, options = list(pagelength=4, scrollX = TRUE))
+    
+    
+  })
     
 }
 

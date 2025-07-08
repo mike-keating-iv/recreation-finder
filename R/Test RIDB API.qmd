@@ -32,7 +32,9 @@ facs$CAMPSITE
 ```
 
 ```{r}
-get_activities()
+camps <- get_campsites_for_facility("232441")
+#camps$ATTRIBUTES[1]
+camps
 ```
 
 ```{r}

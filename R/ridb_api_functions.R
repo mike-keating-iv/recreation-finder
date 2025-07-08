@@ -144,6 +144,32 @@ get_campsites_for_facility <- function(facility_id){
   
   endpoint <- paste0("/facilities/", facility_id, "/campsites")
   print(endpoint)
-  get_ridb(endpoint)
+  campsites <- get_ridb(endpoint)
+  
+  # TODO: Handle trying to call this function on a facility that doesn't return campsites
+  
+  campsites <- campsites |>
+    mutate(
+      # Flatten attributes into one row per campsite
+      AttributeSummary = map_chr(ATTRIBUTES, function(attr_df) {
+        if (is.data.frame(attr_df) && all(c("AttributeName", "AttributeValue") %in% names(attr_df))) {
+          paste0(attr_df$AttributeName, ": ", attr_df$AttributeValue, collapse = "; ")
+        } else {
+          NA_character_
+        }
+      })
+    )
+  return(campsites)
 }
 
+# Wrapper to combine campsites and addresses into details
+get_facility_details <- function(facility_id){
+  campsites <- get_campsites_for_facility(facility_id) |> 
+    select(CampsiteID, CampsiteName, CampsiteReservable, CampsiteType, TypeOfUse, AttributeSummary)
+  
+  
+  addresses <- list()
+  
+  details <- list(addresses=addresses, campsites = campsites)
+  return(details)
+}

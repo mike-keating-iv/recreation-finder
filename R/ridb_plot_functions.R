@@ -128,6 +128,8 @@ create_facilities_map <- function(df, color_map_group){
         "<strong>Organization:</strong> ", as.character(OrgName %||% "Unknown"), "<br>",
         "<strong>Recreation Area:</strong>", as.character(RecAreaName %||% "Unknown"), "<br>",
         "<strong>Activities:</strong> ", as.character(Activities %||% "None"), "<br>",
+        # Add a button that allows us to call the api to fetch details for the specific facility
+        "<button onclick='Shiny.setInputValue(\"fetch_facility\", \"", FacilityID, "\", {priority: \"event\"})'>Fetch Details</button>",
         # Add some css to avoid long descriptions from panning the map awkwardly
         # Some of the descriptions are fairly long html, which renders nicely
         "<div style='max-height:200px; overflow-y:auto;'>", # scrollable 
