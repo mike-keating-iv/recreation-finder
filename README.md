@@ -2,7 +2,7 @@
 
 An interactive R Shiny application that allows users to explore U.S. recreation facilities via the [Recreation Information Database (RIDB)](https://ridb.recreation.gov/) API.
 
-Developed by **Mike Keating** as part of the ST558 Data Science course project.
+Developed by **Mike Keating** as part of the ST558 Data Science for Statisticians Project 2.
 
 ---
 
