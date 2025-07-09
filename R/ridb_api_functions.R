@@ -189,7 +189,23 @@ get_campsites_for_facility <- function(facility_id){
 
 
 get_addresses_for_facility <- function(facility_id){
+  endpoint <- paste0("/facilities/", facility_id, "/facilityaddresses")
+  print(endpoint)
+  addresses <- get_ridb(endpoint)
   
+  # Handle trying to call this function on a facility that doesn't return campsites
+  
+  if (nrow(addresses) == 0) {
+    addresses <- tibble(Note = "No addresses available for this facility.")
+  }
+  else{
+    # get empty columns, for when there is only one address for the facility
+    empty_cols <- sapply(addresses, function(x) all(x==""))
+    # Only return non empty
+    addresses <- addresses[,!empty_cols]
+    
+  }
+  return(addresses)
 }
 
 
@@ -198,11 +214,8 @@ get_addresses_for_facility <- function(facility_id){
 get_facility_details <- function(facility_id){
   
   campsites <- get_campsites_for_facility(facility_id) 
-    
-  
-  
-  addresses <- list()
-  
+  addresses <- get_addresses_for_facility(facility_id)
   details <- list(addresses=addresses, campsites = campsites)
+  
   return(details)
 }

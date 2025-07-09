@@ -32,9 +32,9 @@ facs$CAMPSITE
 ```
 
 ```{r}
-camps <- get_campsites_for_facility("232441")
+adds <- get_addresses_for_facility("10000305")
 #camps$ATTRIBUTES[1]
-camps
+adds
 ```
 
 ```{r}
@@ -45,7 +45,7 @@ geocode_zip("27701")
 
 # Testing code to run app
 runGitHub(
-  repo = "st558-project2",        
+  repo = "recreation-finder",        
   username = "mike-keating-iv",
   subdir = "RecreationFinder",
   ref = "main"              

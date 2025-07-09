@@ -113,7 +113,15 @@ create_facilities_map <- function(df, color_map_group){
   group_values <- df[[color_map_group]] %||% "Unknown"
   
   # Color Pallete
-  pal <- colorFactor("Dark2", domain=unique(group_values))
+  # I like the Dark2 color palette more but it only supports 8 groups
+  n_groups <- length(unique(group_values))
+  if (n_groups <= 8){
+    pal <- colorFactor(palette ="Dark2", domain=unique(group_values))
+  } else {
+    # Switch to base R rainbow pallete
+    pal <- colorFactor(palette =rainbow(length(unique(group_values))), domain=unique(group_values))
+  }
+  
   
   leaflet(data = df) |>
     addProviderTiles("CartoDB.Positron") |>

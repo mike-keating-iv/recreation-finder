@@ -39,7 +39,7 @@ ui <- page_fluid(
       <h4>Tabs Overview</h4>
       <ul>
         <li><strong>Search Facilities</strong>: Query the RIDB API for facilities based on ZIP code, state, and activity. Download and explore the resulting dataset.<br>Users can select from a list of activities populated by a call to the API</li>
-        <li><strong>Explore</strong>: Create interactive plots and view a map of facilities.</li>
+        <li><strong>Explore</strong>: Create interactive plots and view a map of facilities. Details on a specific facility, including campsites (if any) and addresses can be fetched by clicking 'Fetch Details' on the facility map marker popup.</li>
       </ul>
 
       <img src='imgs/RecLogo_Tag.png' height='120px'>
@@ -138,6 +138,8 @@ ui <- page_fluid(
     nav_panel("Facility Details",
               fluidPage(
                 # Since this will only be populated after querying a facility we need to make it output
+                uiOutput("selected_facility_title"),
+                dataTableOutput("facility_addresses"),
                 dataTableOutput("facility_campgrounds"),
               )),
     
@@ -184,7 +186,7 @@ server <- function(input, output, session){
     selected_cols <- input$columns %||% names(facilities())
     # Don't display the columns that contain objects
     # We want to keep them in the actual tibble though
-    selected_cols <- setdiff(selected_cols, c("ACTIVITY", "ORGANIZATION"))
+    selected_cols <- setdiff(selected_cols, c("ACTIVITY", "ORGANIZATION", "CAMPSITE", "RECAREA"))
     
     # Show a note if our api call returns nothing
     if (nrow(facilities()) == 0) {
@@ -219,10 +221,38 @@ server <- function(input, output, session){
     checkboxGroupInput(
       "columns",
       "Select Columns to Keep",
-      choices = names(facilities()),
-      selected = names(facilities())
+      choices = setdiff(names(facilities()), c("ACTIVITY", "ORGANIZATION", "CAMPSITE", "RECAREA")),
+      selected = setdiff(names(facilities()), c("ACTIVITY", "ORGANIZATION", "CAMPSITE", "RECAREA")),
+
     )
   })
+  
+  output$download_data <- downloadHandler(
+    filename = function(){
+      paste0("facilities_", Sys.Date(), ".csv")
+    },
+    content = function(file){
+      req(facilities())
+      
+      # Find the rows filtered (in the top columns)
+      filtered_rows <- input$facility_table_rows_all # Note: this input is automatically made from renderDataTable
+      
+      # Fall back to all rows if nothing is filtered
+      df <- facilities()
+      df <- df[filtered_rows %||% seq_len(nrow(df)), , drop = FALSE]
+      
+      selected_cols <- input$columns %||% names(facilities())
+      # remove list columns to prevent download error
+      selected_cols <- setdiff(selected_cols, c("ACTIVITY", "ORGANIZATION", "ATTRIBUTES", "CAMPSITE", "RECAREA")) 
+      
+      df <- df[, selected_cols, drop = FALSE]
+      
+      write.csv(df, file, row.names = FALSE)  
+    },
+    contentType = "text/csv"
+  )
+  
+  
   
   # EXPLORE TAB
 
@@ -253,6 +283,7 @@ server <- function(input, output, session){
   
   output$explore_plot <- renderPlot({
     req(facilities(), input$x_var, input$plot_type)
+    
     create_explore_plot(
       df = facilities(),
       x_var = input$x_var,
@@ -274,7 +305,7 @@ server <- function(input, output, session){
   output$contingency_table <- renderTable({
     req(facilities(), input$contingency_choice)
 
-    create_contingency_table(facilities(), input$contingency_choice)
+    return(create_contingency_table(facilities(), input$contingency_choice))
   })
   
   ### FACILITY DETAILS TAB
@@ -298,13 +329,25 @@ server <- function(input, output, session){
     
     campsites <- selected_facility_details()$campsites
     
-    # Make sure campsites exist
-    if (nrow(campsites) == 0) return(datatable(data.frame(Note = "No campsites available."), options = list(dom = 't')))
     
-    datatable(campsites, options = list(pagelength=4, scrollX = TRUE))
-    
+    return(datatable(campsites, options = list(pagelength=4, scrollX = TRUE)))
     
   })
+  
+  output$facility_addresses <- renderDataTable({
+    req(selected_facility_details)
+    addresses <- selected_facility_details()$addresses
+    
+    return(datatable(addresses, options = list(pagelength = 4, scrollX = TRUE)))
+  })
+  
+  output$selected_facility_title <- renderUI({
+    req(facilities(), input$fetch_facility)
+    facility_name <- facilities() |> filter(FacilityID == input$fetch_facility) |> pull(FacilityName)
+    
+    return(h3(paste0(facility_name, " | Details")))
+  })
+  
     
 }
 
