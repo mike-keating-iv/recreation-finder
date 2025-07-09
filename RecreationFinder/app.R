@@ -9,8 +9,8 @@ library(bslib)
 library(leaflet) # For mapping
 
 # Import our custom functions
-source("../R/ridb_api_functions.R")
-source("../R/ridb_plot_functions.R")
+source("ridb_api_functions.R")
+source("ridb_plot_functions.R")
 
 # Set one of the bslib themes
 theme <- bs_theme(bootswatch = "flatly")
