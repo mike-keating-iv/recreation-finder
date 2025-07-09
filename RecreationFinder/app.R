@@ -39,7 +39,7 @@ ui <- page_fluid(
       <h4>Tabs Overview</h4>
       <ul>
         <li><strong>Search Facilities</strong>: Query the RIDB API for facilities based on ZIP code, state, and activity. Download and explore the resulting dataset.<br>Users can select from a list of activities populated by a call to the API</li>
-        <li><strong>Explore</strong>: Create interactive plots and view a map of facilities. Details on a specific facility, including campsites (if any) and addresses can be fetched by clicking 'Fetch Details' on the facility map marker popup.</li>
+        <li><strong>Explore</strong>: Create interactive plots and view a map of facilities. Details on a specific facility, including campsites (if any) and addresses can be fetched by clicking 'Fetch Details' on the facility map marker popup.<br>Note: There may be some issues with correct coordinates when searching by some states, causing facilities to be mapped outside of the state. This is a suspected issue with the RIDB source.</li>
       </ul>
 
       <img src='imgs/RecLogo_Tag.png' height='120px'>

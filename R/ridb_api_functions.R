@@ -16,8 +16,11 @@ get_ridb <- function(endpoint, params=list(), limit = 500, all_pages = TRUE){
   base <- "https://ridb.recreation.gov/api/v1"
   url <- paste0(base, endpoint)
   
-  # Get local key
-  key <- Sys.getenv("RIDB_API_KEY")
+  # Deprecated: Decided to hardcode the key instead 
+  #Get local 
+  #key <- Sykeys.getenv("RIDB_API_KEY")
+  
+  key <- "5ddae9d5-22fa-4a92-9362-145c4c4960ab"
   
 
   all_results <- list()
