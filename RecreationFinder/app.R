@@ -1,11 +1,8 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    https://shiny.posit.co/
+# Recreation Finder
+# R Shiny Web App
+# Build Date: 7/8/25
 # Author: Mike Keating
+
 library(shiny)
 library(DT)
 library(bslib)
@@ -17,8 +14,6 @@ source("../R/ridb_plot_functions.R")
 
 # Set one of the bslib themes
 theme <- bs_theme(bootswatch = "flatly")
-
-
 
 ui <- page_fluid(
   theme = theme,
@@ -96,9 +91,6 @@ ui <- page_fluid(
                                     choices = c("None", "OrgName", "RecAreaName", "FacilityTypeDescription", "Reservable")),
                         checkboxInput("add_facet", "Facet by Group?", value = FALSE)
                       )
-                    
-    
-                      
                     ),
                     mainPanel(
                       plotOutput("explore_plot"),

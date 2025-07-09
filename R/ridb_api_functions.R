@@ -15,14 +15,8 @@ get_ridb <- function(endpoint, params=list(), limit = 500, all_pages = TRUE){
   # Each function will pass it a specific endpoint
   base <- "https://ridb.recreation.gov/api/v1"
   url <- paste0(base, endpoint)
-  
-  # Deprecated: Decided to hardcode the key instead 
-  #Get local 
-  #key <- Sykeys.getenv("RIDB_API_KEY")
-  
   key <- "5ddae9d5-22fa-4a92-9362-145c4c4960ab"
   
-
   all_results <- list()
   start <- 0
   repeat{
@@ -38,7 +32,7 @@ get_ridb <- function(endpoint, params=list(), limit = 500, all_pages = TRUE){
     
     start <- start + limit
     
-    # Stop getting results once we reach no longer add more
+    # Stop getting results once we reach no longer add more new results
     if(!all_pages || start >= total_results) break
     
   }
@@ -170,26 +164,10 @@ get_campsites_for_facility <- function(facility_id){
     }) # Then expand into columns
     ) |> unnest_wider(ATTRIBUTES_extracted, names_repair = "unique") |> 
       select(!ATTRIBUTES) # drop this column since we don't need it anymore
-    
-    ## Deprecated
-    # campsites <- campsites |>
-    #   mutate(
-    #     # Flatten attributes into one row per campsite
-    #     # It's probably better to widen the tibble and make columns for each
-    #   #   AttributeSummary = map_chr(ATTRIBUTES, function(attr_df) {
-    #   #     if (is.data.frame(attr_df) && all(c("AttributeName", "AttributeValue") %in% names(attr_df))) {
-    #   #       paste0(attr_df$AttributeName, ": ", attr_df$AttributeValue, collapse = "; ")
-    #   #     } else {
-    #   #       NA_character_
-    #   #     }
-    #   #   })
-    #   # )
-    
   }
 
   return(campsites)
 }
-
 
 get_addresses_for_facility <- function(facility_id){
   endpoint <- paste0("/facilities/", facility_id, "/facilityaddresses")
@@ -210,8 +188,6 @@ get_addresses_for_facility <- function(facility_id){
   }
   return(addresses)
 }
-
-
 
 # Wrapper to combine campsites and addresses into details
 get_facility_details <- function(facility_id){

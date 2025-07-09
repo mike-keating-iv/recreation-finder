@@ -1,5 +1,5 @@
 # Author: Mike Keating
-# Suite of functions for plotting data
+# Suite of functions for plotting data gathered from the RIDB app
 # Dependencies
 
 
@@ -76,35 +76,9 @@ create_explore_plot <- function(df, x_var,group_var, plot_type, facet = FALSE) {
 }
 
 
-create_summary_table <- function(df, x_var, y_var = NULL, group_var = NULL) {
-  group_var <- if (group_var == "None") NULL else group_var
-  var_to_summarize <- y_var %||% x_var
-  
-  if (!is.null(group_var)) {
-    df |>
-      group_by(.data[[group_var]]) |>
-      summarize(
-        Count = n(),
-        Mean = mean(as.numeric(.data[[var_to_summarize]]), na.rm = TRUE),
-        SD = sd(as.numeric(.data[[var_to_summarize]]), na.rm = TRUE),
-        .groups = "drop"
-      )
-  } else {
-    tibble(
-      Count = nrow(df),
-      Mean = mean(as.numeric(df[[var_to_summarize]]), na.rm = TRUE),
-      SD = sd(as.numeric(df[[var_to_summarize]]), na.rm = TRUE)
-    )
-  }
-}
-
 
 create_facilities_map <- function(df, color_map_group){
   # Create Map of the facilities
-  
-
-  
-
   
   # Filter out locations that are entered as (0,0) which adds points off the coast of Africa
   df <- df |> filter(FacilityLongitude != 0, FacilityLatitude != 0)
